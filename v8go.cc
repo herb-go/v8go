@@ -777,7 +777,7 @@ void ValueRelease(ValuePtr ptr) {
   }
 
   ptr->ctx->vals.erase(ptr->id);
-  ptr->ptr.Reset();
+  ptr->ptr.SetWeak();
   delete ptr;
 }
 

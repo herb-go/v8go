@@ -5,13 +5,10 @@
 #ifndef V8_UTIL_H_
 #define V8_UTIL_H_
 
+#include "v8.h"  // NOLINT(build/include_directory)
 #include <assert.h>
-
 #include <map>
 #include <vector>
-
-#include "v8-function-callback.h"  // NOLINT(build/include_directory)
-#include "v8-persistent-handle.h"  // NOLINT(build/include_directory)
 
 /**
  * Support for Persistent containers.
@@ -21,9 +18,6 @@
  * may want these container classes.
  */
 namespace v8 {
-
-template <typename K, typename V, typename Traits>
-class GlobalValueMap;
 
 typedef uintptr_t PersistentContainerValue;
 static const uintptr_t kPersistentContainerNotFound = 0;
@@ -49,7 +43,7 @@ class StdMapTraits {
 
   static bool Empty(Impl* impl) { return impl->empty(); }
   static size_t Size(Impl* impl) { return impl->size(); }
-  static void Swap(Impl& a, Impl& b) { std::swap(a, b); }
+  static void Swap(Impl& a, Impl& b) { std::swap(a, b); }  // NOLINT
   static Iterator Begin(Impl* impl) { return impl->begin(); }
   static Iterator End(Impl* impl) { return impl->end(); }
   static K Key(Iterator it) { return it->first; }
@@ -537,6 +531,7 @@ class StdGlobalValueMap : public GlobalValueMap<K, V, Traits> {
       : GlobalValueMap<K, V, Traits>(isolate) {}
 };
 
+
 class DefaultPersistentValueVectorTraits {
  public:
   typedef std::vector<PersistentContainerValue> Impl;
@@ -561,6 +556,7 @@ class DefaultPersistentValueVectorTraits {
   }
 };
 
+
 /**
  * A vector wrapper that safely stores Global values.
  * C++11 embedders don't need this class, as they can use Global
@@ -571,8 +567,8 @@ class DefaultPersistentValueVectorTraits {
  * PersistentContainerValue, with all conversion into and out of V8
  * handles being transparently handled by this class.
  */
-template <typename V, typename Traits = DefaultPersistentValueVectorTraits>
-class V8_DEPRECATE_SOON("Use std::vector<Global<V>>.") PersistentValueVector {
+template<typename V, typename Traits = DefaultPersistentValueVectorTraits>
+class PersistentValueVector {
  public:
   explicit PersistentValueVector(Isolate* isolate) : isolate_(isolate) { }
 

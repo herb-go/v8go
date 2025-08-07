@@ -5,20 +5,9 @@ import subprocess
 import shutil
 import argparse
 
-valid_archs = ['arm64', 'x86_64']
-# "x86_64" is called "amd64" on Windows
-current_arch = platform.uname()[4].lower().replace("amd64", "x86_64")
-default_arch = current_arch if current_arch in valid_archs else None
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', dest='debug', action='store_true')
 parser.add_argument('--no-clang', dest='clang', action='store_false')
-parser.add_argument('--arch',
-    dest='arch',
-    action='store',
-    choices=valid_archs,
-    default=default_arch,
-    required=default_arch is None)
 parser.set_defaults(debug=False, clang=True)
 args = parser.parse_args()
 
@@ -51,22 +40,20 @@ gclient_sln = [
 gn_args = """
 is_debug=%s
 is_clang=%s
-target_cpu="%s"
-v8_target_cpu="%s"
 clang_use_chrome_plugins=false
 use_custom_libcxx=false
 use_sysroot=false
-symbol_level=%s
-strip_debug_info=%s
+symbol_level=0
+strip_debug_info=true
 is_component_build=false
 v8_monolithic=true
 v8_use_external_startup_data=false
 treat_warnings_as_errors=false
 v8_embedder_string="-v8go"
 v8_enable_gdbjit=false
-v8_enable_i18n_support=true
-icu_use_data_file=false
+v8_enable_i18n_support=false
 v8_enable_test_features=false
+v8_untrusted_code_mitigations=false
 exclude_unwind_tables=true
 """
 
@@ -83,12 +70,8 @@ def cmd(args):
 
 def os_arch():
     u = platform.uname()
-    return u[0].lower() + "_" + args.arch
-
-def v8_arch():
-    if args.arch == "x86_64":
-        return "x64"
-    return args.arch
+    # "x86_64" is called "amd64" on Windows
+    return (u[0] + "_" + u[4]).lower().replace("amd64", "x86_64")
 
 def apply_mingw_patches():
     v8_build_path = os.path.join(v8_path, "build")
@@ -105,14 +88,15 @@ def apply_patch(patch_name, working_dir):
     subprocess.check_call(["git", "apply", "-v", patch_path], cwd=working_dir)
 
 def update_last_change():
+    import v8.build.util.lastchange as lastchange
     out_path = os.path.join(v8_path, "build", "util", "LASTCHANGE")
-    subprocess.check_call(["python", "build/util/lastchange.py", "-o", out_path], cwd=v8_path)
+    lastchange.main(["lastchange", "-o", out_path])
 
 def main():
     v8deps()
     if is_windows:
         apply_mingw_patches()
-
+    
     gn_path = os.path.join(tools_path, "gn")
     assert(os.path.exists(gn_path))
     ninja_path = os.path.join(tools_path, "ninja" + (".exe" if is_windows else ""))
@@ -123,16 +107,9 @@ def main():
 
     is_debug = 'true' if args.debug else 'false'
     is_clang = 'true' if args.clang else 'false'
-    # symbol_level = 1 includes line number information
-    # symbol_level = 2 can be used for additional debug information, but it can increase the
-    #   compiled library by an order of magnitude and further slow down compilation
-    symbol_level = 1 if args.debug else 0
-    strip_debug_info = 'false' if args.debug else 'true'
-
-    arch = v8_arch()
-    gnargs = gn_args % (is_debug, is_clang, arch, arch, symbol_level, strip_debug_info)
+    gnargs = gn_args % (is_debug, is_clang)
     gen_args = gnargs.replace('\n', ' ')
-
+    
     subprocess.check_call(cmd([gn_path, "gen", build_path, "--args=" + gen_args]),
                         cwd=v8_path,
                         env=env)

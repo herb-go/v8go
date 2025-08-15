@@ -598,3 +598,10 @@ func (v *Value) SharedArrayBufferGetContents() ([]byte, func(), error) {
 
 	return byte_slice, release, nil
 }
+
+func ForceV8GC(iso *Isolate) {
+	if iso == nil {
+		panic("v8go: ForceV8GC called with nil Isolate")
+	}
+	C.ForceV8GC(iso.ptr)
+}

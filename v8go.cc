@@ -609,11 +609,14 @@ void ContextFree(ContextPtr ctx) {
   if (ctx == nullptr) {
     return;
   }
+  Isolate* iso = ctx->iso;
+  Locker locker(iso);
   ctx->ptr.Reset();
 
   for (auto it = ctx->vals.begin(); it != ctx->vals.end(); ++it) {
     auto value = it->second;
     value->ptr.Reset();
+    value->ctx = nullptr;  // prevent double free in ValueRelease
     delete value;
   }
   ctx->vals.clear();
@@ -770,15 +773,31 @@ const char* JSONStringify(ContextPtr ctx, ValuePtr val) {
   String::Utf8Value json(iso, str);
   return CopyString(json);
 }
+void ForceV8GC(IsolatePtr iso_ptr) {
+  Isolate* iso = static_cast<Isolate*>(iso_ptr);
+  Locker locker(iso);
+  v8::Isolate::Scope isolate_scope(iso);
+  v8::HandleScope handle_scope(iso);
+  iso->LowMemoryNotification();
+   while (!iso->IdleNotificationDeadline(1000 /* milliseconds */)) {
+   }
+}
+void WeakCallback(const v8::WeakCallbackInfo<m_value>& data) {
+  ValuePtr ptr = data.GetParameter();
+  Locker locker(ptr->iso);
+  std::cout << "WeakCallback called for Value id " << ptr->id << std::endl;
+  ptr->ctx->vals.erase(ptr->id);
+  ptr->ptr.Reset();
+  delete ptr;
+}
 
 void ValueRelease(ValuePtr ptr) {
   if (ptr == nullptr) {
     return;
   }
-
-  ptr->ctx->vals.erase(ptr->id);
-  ptr->ptr.SetWeak();
-  delete ptr;
+    Locker locker(ptr->iso);
+    std::cout << "ValueRelease called for Value id " << ptr->id << std::endl;
+    ptr->ptr.SetWeak(ptr,WeakCallback,WeakCallbackType::kParameter);
 }
 
 ValuePtr ContextGlobal(ContextPtr ctx) {

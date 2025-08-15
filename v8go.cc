@@ -785,7 +785,6 @@ void ForceV8GC(IsolatePtr iso_ptr) {
 void WeakCallback(const v8::WeakCallbackInfo<m_value>& data) {
   ValuePtr ptr = data.GetParameter();
   Locker locker(ptr->iso);
-  std::cout << "WeakCallback called for Value id " << ptr->id << std::endl;
   ptr->ctx->vals.erase(ptr->id);
   ptr->ptr.Reset();
   delete ptr;
@@ -796,7 +795,6 @@ void ValueRelease(ValuePtr ptr) {
     return;
   }
     Locker locker(ptr->iso);
-    std::cout << "ValueRelease called for Value id " << ptr->id << std::endl;
     ptr->ptr.SetWeak(ptr,WeakCallback,WeakCallbackType::kParameter);
 }
 

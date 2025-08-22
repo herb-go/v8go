@@ -213,6 +213,7 @@ extern RtnValue NewValueBigIntFromWords(IsolatePtr iso_ptr,
                                         int word_count,
                                         const uint64_t* words);
 extern void ForceV8GC(IsolatePtr iso_ptr);
+extern void WriteHeapSnapshot(IsolatePtr iso, const char* path);
 void ValueRelease(ValuePtr ptr);
 extern RtnString ValueToString(ValuePtr ptr);
 const uint32_t* ValueToArrayIndex(ValuePtr ptr);

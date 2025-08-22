@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "v8go.h"
+#include "v8-profiler.h"
 
 #include <stdio.h>
 
@@ -155,9 +156,9 @@ IsolatePtr NewIsolate() {
   Locker locker(iso);
   Isolate::Scope isolate_scope(iso);
   HandleScope handle_scope(iso);
-
   iso->SetCaptureStackTraceForUncaughtExceptions(true);
-
+  iso->IsolateInBackgroundNotification();
+  iso->MemoryPressureNotification(MemoryPressureLevel::kCritical);
   // Create a Context for internal use
   m_ctx* ctx = new m_ctx;
   ctx->ptr.Reset(iso, Context::New(iso));
@@ -516,6 +517,7 @@ static void FunctionTemplateCallback(const FunctionCallbackInfo<Value>& info) {
       goFunctionCallback(ctx_ref, callback_ref, thisAndArgs, args_count);
   if (val != nullptr) {
     info.GetReturnValue().Set(val->ptr.Get(iso));
+    ValueRelease(val);
   } else {
     info.GetReturnValue().SetUndefined();
   }
@@ -609,8 +611,6 @@ void ContextFree(ContextPtr ctx) {
   if (ctx == nullptr) {
     return;
   }
-  Isolate* iso = ctx->iso;
-  Locker locker(iso);
   ctx->ptr.Reset();
 
   for (auto it = ctx->vals.begin(); it != ctx->vals.end(); ++it) {
@@ -779,23 +779,81 @@ void ForceV8GC(IsolatePtr iso_ptr) {
   v8::Isolate::Scope isolate_scope(iso);
   v8::HandleScope handle_scope(iso);
   iso->LowMemoryNotification();
+  iso->MemoryPressureNotification(MemoryPressureLevel::kCritical);
+  iso->ClearCachesForTesting();
+
    while (!iso->IdleNotificationDeadline(1000 /* milliseconds */)) {
    }
-}
-void WeakCallback(const v8::WeakCallbackInfo<m_value>& data) {
-  ValuePtr ptr = data.GetParameter();
-  Locker locker(ptr->iso);
-  ptr->ctx->vals.erase(ptr->id);
-  ptr->ptr.Reset();
-  delete ptr;
 }
 
 void ValueRelease(ValuePtr ptr) {
   if (ptr == nullptr) {
     return;
   }
-    Locker locker(ptr->iso);
-    ptr->ptr.SetWeak(ptr,WeakCallback,WeakCallbackType::kParameter);
+  Locker locker(ptr->iso);
+  if (ptr->ctx->vals.erase(ptr->id)){
+    ptr->ptr.Reset();
+  }
+  delete ptr;
+
+}
+class FileOutputStream : public v8::OutputStream {
+public:
+    FileOutputStream(const std::string& filename) : file_(filename, std::ios::binary) {
+        if (!file_.is_open()) {
+            std::cerr << "Error: Could not open file for writing: " << filename << std::endl;
+        }
+    }
+
+    ~FileOutputStream() {
+        if (file_.is_open()) {
+            file_.close();
+        }
+    }
+
+  WriteResult WriteAsciiChunk(char* data, int size ) override {
+    if (!file_.is_open()) {
+      return kAbort; // Signal V8 to stop writing if the file is not open
+    }
+    file_.write(static_cast<const char*>(data), size);
+    return kContinue; // Indicate successful writing
+  }
+
+  WriteResult WriteHeapStatsChunk(v8::HeapStatsUpdate* data, int count) override {
+    if (!file_.is_open()) {
+      return kAbort;
+    }
+    file_.write(reinterpret_cast<const char*>(data), count * sizeof(v8::HeapStatsUpdate));
+    return kContinue;
+  }
+
+  void EndOfStream() override {
+  }
+
+private:
+    std::ofstream file_;
+};
+
+void WriteHeapSnapshot(IsolatePtr iso_ptr,
+                            const char* path
+                            ) {
+  Isolate* iso = static_cast<Isolate*>(iso_ptr);
+  Locker locker(iso);
+  Isolate::Scope isolate_scope(iso);
+  HandleScope handle_scope(iso);
+
+  std::string wpath= path;
+  HeapProfiler* profiler = iso->GetHeapProfiler();
+  const v8::HeapSnapshot* snapshot = profiler->TakeHeapSnapshot(); 
+  if (snapshot == nullptr) {
+    std::cerr << "Failed to take heap snapshot" << std::endl;
+    return;
+  }
+  
+  FileOutputStream stream(wpath);
+  snapshot->Serialize(&stream);
+  const_cast<v8::HeapSnapshot*>(snapshot)->Delete();
+  profiler->DeleteAllHeapSnapshots();
 }
 
 ValuePtr ContextGlobal(ContextPtr ctx) {

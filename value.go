@@ -605,3 +605,17 @@ func ForceV8GC(iso *Isolate) {
 	}
 	C.ForceV8GC(iso.ptr)
 }
+
+func WriteHeapSnapshot(iso *Isolate, path string) {
+	if iso == nil {
+		panic("v8go: WriteHeapSnapshot called with nil Isolate")
+	}
+	if path == "" {
+		panic("v8go: WriteHeapSnapshot called with empty path")
+	}
+
+	cPath := C.CString(path)
+	defer C.free(unsafe.Pointer(cPath))
+
+	C.WriteHeapSnapshot(iso.ptr, cPath)
+}

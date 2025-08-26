@@ -780,7 +780,7 @@ void ForceV8GC(IsolatePtr iso_ptr) {
   v8::HandleScope handle_scope(iso);
   iso->LowMemoryNotification();
   iso->MemoryPressureNotification(MemoryPressureLevel::kCritical);
-  iso->ClearCachesForTesting();
+  //iso->ClearCachesForTesting();
 
    while (!iso->IdleNotificationDeadline(1000 /* milliseconds */)) {
    }

@@ -303,3 +303,8 @@ Go has `go fmt`, C has `clang-format`. Any changes to the `v8go.h|cc` should be 
 ---
 
 V8 Gopher image based on original artwork from the amazing [Renee French](http://reneefrench.blogspot.com).
+
+
+-----
+
+# fix memory leak

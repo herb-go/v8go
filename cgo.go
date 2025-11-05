@@ -10,17 +10,16 @@ package v8go
 // #cgo LDFLAGS: -pthread -lv8
 // #cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/deps/darwin_x86_64
 // #cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/deps/darwin_arm64
-// #cgo linux,amd64 LDFLAGS: -L${SRCDIR}/deps/linux_x86_64 -ldl
-// #cgo linux,arm64 LDFLAGS: -L${SRCDIR}/deps/linux_arm64 -ldl
+// #cgo linux LDFLAGS: -L${SRCDIR}/deps/linux_x86_64
+// #cgo windows LDFLAGS: -L${SRCDIR}/deps/windows_x86_64 -static -ldbghelp -lssp -lwinmm -lz
 import "C"
 
 // These imports forces `go mod vendor` to pull in all the folders that
 // contain V8 libraries and headers which otherwise would be ignored.
 // DO NOT REMOVE
 import (
-	_ "github.com/herb-go/v8go/deps/darwin_arm64"
 	_ "github.com/herb-go/v8go/deps/darwin_x86_64"
 	_ "github.com/herb-go/v8go/deps/include"
-	_ "github.com/herb-go/v8go/deps/linux_arm64"
 	_ "github.com/herb-go/v8go/deps/linux_x86_64"
+	_ "github.com/herb-go/v8go/deps/windows_x86_64"
 )

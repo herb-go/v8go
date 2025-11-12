@@ -10,3 +10,4 @@ deps/.gclient_previous*
 c.out
 .idea/*
 /v8go.test
+__debug_*

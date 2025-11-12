@@ -928,7 +928,14 @@ RtnValue NewValueString(IsolatePtr iso, const char* v, int v_length) {
   rtn.value = tracked_value(ctx, val);
   return rtn;
 }
-
+void WriteToArrayBuffer(ValuePtr ptr, void* v, int v_length) {
+  LOCAL_VALUE(ptr);
+  if (value->IsArrayBuffer()) {
+    Local<v8::ArrayBuffer> arrayBuffer = Local<v8::ArrayBuffer>::Cast(value);
+    ArrayBuffer::Contents contents = arrayBuffer->GetContents();
+    memcpy(contents.Data(), v, v_length);
+  }
+}
 ValuePtr NewValueNull(IsolatePtr iso) {
   ISOLATE_SCOPE_INTERNAL_CONTEXT(iso);
   m_value* val = new m_value;
@@ -1079,6 +1086,20 @@ RtnString ValueToString(ValuePtr ptr) {
   return rtn;
 }
 
+RtnString ArrayBufferContent(ValuePtr ptr) {
+  LOCAL_VALUE(ptr);
+  RtnString rtn = {0};
+  if (value->IsArrayBuffer()) {
+    Local<v8::ArrayBuffer> arrayBuffer = Local<v8::ArrayBuffer>::Cast(value);
+    ArrayBuffer::Contents contents = arrayBuffer->GetContents();
+    const char* cdata = (char*)contents.Data();
+    char* data = static_cast<char*>(malloc(contents.ByteLength()));
+    memcpy(data, cdata, contents.ByteLength());
+    rtn.data = data;
+    rtn.length = contents.ByteLength();
+  }
+  return rtn;
+}
 uint32_t ValueToUint32(ValuePtr ptr) {
   LOCAL_VALUE(ptr);
   return value->Uint32Value(local_ctx).ToChecked();

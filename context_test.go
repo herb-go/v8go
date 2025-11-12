@@ -48,7 +48,7 @@ func TestJSExceptions(t *testing.T) {
 		origin string
 		err    string
 	}{
-		{"SyntaxError", "bad js syntax", "syntax.js", "SyntaxError: Unexpected identifier 'js'"},
+		{"SyntaxError", "bad js syntax", "syntax.js", "SyntaxError: Unexpected identifier"},
 		{"ReferenceError", "add()", "add.js", "ReferenceError: add is not defined"},
 	}
 

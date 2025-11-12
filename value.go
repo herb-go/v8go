@@ -52,6 +52,18 @@ func Undefined(iso *Isolate) *Value {
 func Null(iso *Isolate) *Value {
 	return iso.null
 }
+func WriteToArrayBuffer(v *Value, val []byte) {
+	cdata := C.CBytes(val)
+	defer C.free(cdata)
+	C.WriteToArrayBuffer(v.ptr, cdata, C.int(len(val)))
+}
+
+func ArrayBufferContent(v *Value) []byte {
+	s := C.ArrayBufferContent(v.ptr)
+	defer C.free(unsafe.Pointer(s.data))
+	return C.GoBytes(unsafe.Pointer(s.data), C.int(s.length))
+
+}
 
 // NewValue will create a primitive value. Supported values types to create are:
 //

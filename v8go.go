@@ -32,7 +32,7 @@ func SetFlags(flags ...string) {
 
 func initializeIfNecessary() {
 	v8once.Do(func() {
-		cflags := C.CString("--no-freeze_flags_after_init")
+		cflags := C.CString("")
 		defer C.free(unsafe.Pointer(cflags))
 		C.SetFlags(cflags)
 		C.Init()

@@ -8122,6 +8122,7 @@ using JitCodeEventHandler = void (*)(const JitCodeEvent* event);
  * Callback function passed to SetUnhandledExceptionCallback.
  */
 #if defined(V8_OS_WIN)
+#include <windows.h> 
 using UnhandledExceptionCallback =
     int (*)(_EXCEPTION_POINTERS* exception_pointers);
 #endif

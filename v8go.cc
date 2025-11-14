@@ -932,8 +932,8 @@ void WriteToArrayBuffer(ValuePtr ptr, void* v, int v_length) {
   LOCAL_VALUE(ptr);
   if (value->IsArrayBuffer()) {
     Local<v8::ArrayBuffer> arrayBuffer = Local<v8::ArrayBuffer>::Cast(value);
-    ArrayBuffer::Contents contents = arrayBuffer->GetContents();
-    memcpy(contents.Data(), v, v_length);
+    auto store = arrayBuffer->GetBackingStore();
+    memcpy(store->Data(), v, v_length);
   }
 }
 ValuePtr NewValueNull(IsolatePtr iso) {
@@ -1091,12 +1091,12 @@ RtnString ArrayBufferContent(ValuePtr ptr) {
   RtnString rtn = {0};
   if (value->IsArrayBuffer()) {
     Local<v8::ArrayBuffer> arrayBuffer = Local<v8::ArrayBuffer>::Cast(value);
-    ArrayBuffer::Contents contents = arrayBuffer->GetContents();
-    const char* cdata = (char*)contents.Data();
-    char* data = static_cast<char*>(malloc(contents.ByteLength()));
-    memcpy(data, cdata, contents.ByteLength());
+    auto store = arrayBuffer->GetBackingStore();
+    const char* cdata = (char*)store->Data();
+    char* data = static_cast<char*>(malloc(store->ByteLength()));
+    memcpy(data, cdata, store->ByteLength());
     rtn.data = data;
-    rtn.length = contents.ByteLength();
+    rtn.length = store->ByteLength();
   }
   return rtn;
 }

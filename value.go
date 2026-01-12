@@ -618,6 +618,14 @@ func ForceV8GC(iso *Isolate) {
 	C.ForceV8GC(iso.ptr)
 }
 
+func PumpMessageLoop(iso *Isolate, waitForWork bool) {
+	if waitForWork {
+		C.PumpMessageLoop(iso.ptr, 1)
+	} else {
+		C.PumpMessageLoop(iso.ptr, 0)
+	}
+
+}
 func WriteHeapSnapshot(iso *Isolate, path string) {
 	if iso == nil {
 		panic("v8go: WriteHeapSnapshot called with nil Isolate")

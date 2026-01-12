@@ -213,7 +213,8 @@ extern RtnValue NewValueBigIntFromWords(IsolatePtr iso_ptr,
                                         int sign_bit,
                                         int word_count,
                                         const uint64_t* words);
-extern void PumpMessageLoop(IsolatePtr iso_ptr, int wait_for_work);
+extern int PumpMessageLoop(IsolatePtr iso_ptr, int wait_for_work);
+extern void RunIdleTasks(IsolatePtr iso_ptr,double idle_time_in_seconds);
 extern void ForceV8GC(IsolatePtr iso_ptr);
 extern void WriteHeapSnapshot(IsolatePtr iso, const char* path);
 void ValueRelease(ValuePtr ptr);

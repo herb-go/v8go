@@ -773,16 +773,23 @@ const char* JSONStringify(ContextPtr ctx, ValuePtr val) {
   String::Utf8Value json(iso, str);
   return CopyString(json);
 }
-void PumpMessageLoop(IsolatePtr iso_ptr,int wait_for_work) {
+int PumpMessageLoop(IsolatePtr iso_ptr,int wait_for_work) {
   Isolate* iso = static_cast<Isolate*>(iso_ptr);
   Locker locker(iso);
   v8::Isolate::Scope isolate_scope(iso);
   v8::HandleScope handle_scope(iso);
-  v8::platform::PumpMessageLoop(
+  return v8::platform::PumpMessageLoop(
             default_platform.get(), 
             iso, 
             wait_for_work ? v8::platform::MessageLoopBehavior::kWaitForWork : v8::platform::MessageLoopBehavior::kDoNotWait
           );
+}
+void RunIdleTasks(IsolatePtr iso_ptr,double idle_time_in_seconds){
+  Isolate* iso = static_cast<Isolate*>(iso_ptr);
+  Locker locker(iso);
+  v8::Isolate::Scope isolate_scope(iso);
+  v8::HandleScope handle_scope(iso);
+  v8::platform::RunIdleTasks(default_platform.get(),iso, idle_time_in_seconds);
 }
 void ForceV8GC(IsolatePtr iso_ptr) {
   Isolate* iso = static_cast<Isolate*>(iso_ptr);

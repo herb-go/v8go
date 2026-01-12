@@ -618,13 +618,17 @@ func ForceV8GC(iso *Isolate) {
 	C.ForceV8GC(iso.ptr)
 }
 
-func PumpMessageLoop(iso *Isolate, waitForWork bool) {
+func PumpMessageLoop(iso *Isolate, waitForWork bool) bool {
 	if waitForWork {
-		C.PumpMessageLoop(iso.ptr, 1)
-	} else {
-		C.PumpMessageLoop(iso.ptr, 0)
+		return int(C.PumpMessageLoop(iso.ptr, 1)) == 1
 	}
-
+	return int(C.PumpMessageLoop(iso.ptr, 0)) == 1
+}
+func RunIdleTasks(iso *Isolate, idleTimeInSeconds float64) {
+	if iso == nil {
+		panic("v8go: RunIdleTasks called with nil Isolate")
+	}
+	C.RunIdleTasks(iso.ptr, C.double(idleTimeInSeconds))
 }
 func WriteHeapSnapshot(iso *Isolate, path string) {
 	if iso == nil {

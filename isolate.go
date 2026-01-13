@@ -184,6 +184,6 @@ func (i *Isolate) getCallback(ref int) FunctionCallback {
 	return i.cbs[ref]
 }
 
-func (i *Isolate) RetainedValueCount(ref int) int {
+func (i *Isolate) RetainedValueCount() int {
 	return int(C.IsolateRetainedValueCount(i.ptr))
 }

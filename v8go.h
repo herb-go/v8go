@@ -216,6 +216,7 @@ extern RtnValue NewValueBigIntFromWords(IsolatePtr iso_ptr,
 extern int PumpMessageLoop(IsolatePtr iso_ptr, int wait_for_work);
 extern void RunIdleTasks(IsolatePtr iso_ptr,double idle_time_in_seconds);
 extern void ForceV8GC(IsolatePtr iso_ptr);
+extern int IsolateRetainedValueCount(IsolatePtr iso);
 extern void WriteHeapSnapshot(IsolatePtr iso, const char* path);
 void ValueRelease(ValuePtr ptr);
 extern RtnString ValueToString(ValuePtr ptr);

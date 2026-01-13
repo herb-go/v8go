@@ -183,3 +183,7 @@ func (i *Isolate) getCallback(ref int) FunctionCallback {
 	defer i.cbMutex.RUnlock()
 	return i.cbs[ref]
 }
+
+func (i *Isolate) RetainedValueCount(ref int) int {
+	return int(C.IsolateRetainedValueCount(i.ptr))
+}

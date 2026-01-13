@@ -19,7 +19,7 @@
 
 using namespace v8;
 
-auto default_platform = platform::NewDefaultPlatform();
+auto default_platform = platform::NewDefaultPlatform(0,v8::platform::IdleTaskSupport::kEnabled);
 ArrayBuffer::Allocator* default_allocator;
 
 const int ScriptCompilerNoCompileOptions = ScriptCompiler::kNoCompileOptions;
@@ -185,6 +185,7 @@ void IsolateDispose(IsolatePtr iso) {
 
   iso->Dispose();
 }
+
 
 void IsolateTerminateExecution(IsolatePtr iso) {
   iso->TerminateExecution();
@@ -791,6 +792,14 @@ void RunIdleTasks(IsolatePtr iso_ptr,double idle_time_in_seconds){
   v8::HandleScope handle_scope(iso);
   v8::platform::RunIdleTasks(default_platform.get(),iso, idle_time_in_seconds);
 }
+int IsolateRetainedValueCount(IsolatePtr iso) {
+  if (iso == nullptr) {
+    return 0;
+  }
+  m_ctx* ctx = isolateInternalContext(iso);
+  return ctx->vals.size();
+}
+
 void ForceV8GC(IsolatePtr iso_ptr) {
   Isolate* iso = static_cast<Isolate*>(iso_ptr);
   Locker locker(iso);
